@@ -23,6 +23,7 @@ check_input() {
 }
 
 # 安装所需工具
+yellow "正在安装依赖..."
 sudo apt update
 sudo apt install -y wget bzip2 tar
 
@@ -37,28 +38,6 @@ sudo rm teamspeak.tar.bz2
 # 设置权限
 blue "正在设置权限..."
 sudo chown -R $(whoami):$(whoami) $TeamSpeak_DIR
-
-# 创建服务文件
-blue "正在创建服务"
-sudo tee /etc/systemd/system/teamspeak.service > /dev/null <<EOL
-[Unit]
-Description=TeamSpeak 3 Server
-After=network.target
-
-[Service]
-WorkingDirectory=$TeamSpeak_DIR
-User=$(whoami)
-Group=$(whoami)
-Type=forking
-ExecStart=$TeamSpeak_DIR/ts3server_startscript.sh start
-ExecStop=$TeamSpeak_DIR/ts3server_startscript.sh stop
-ExecReload=$TeamSpeak_DIR/ts3server_startscript.sh restart
-PIDFile=$TeamSpeak_DIR/ts3server.pid
-Restart=always
-
-[Install]
-WantedBy=multi-user.target
-EOL
 
 
 # 配置防火墙
@@ -140,9 +119,52 @@ if [[ -z $AUTO_ALLOW ]] || [[ $AUTO_ALLOW == "1" || $AUTO_ALLOW == "yes" ]]; the
 else
     red "请手动放行所需端口。"
 fi
+# 防火墙部分结束
+
+# 创建服务文件
+blue "正在创建服务"
+sudo tee /etc/systemd/system/teamspeak.service > /dev/null <<EOL
+[Unit]
+Description=TeamSpeak 3 Server
+After=network.target
+
+[Service]
+WorkingDirectory=$TeamSpeak_DIR
+User=$(whoami)
+Group=$(whoami)
+Type=forking
+ExecStart=$TeamSpeak_DIR/ts3server_startscript.sh start
+ExecStop=$TeamSpeak_DIR/ts3server_startscript.sh stop
+ExecReload=$TeamSpeak_DIR/ts3server_startscript.sh restart
+PIDFile=$TeamSpeak_DIR/ts3server.pid
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOL
+
+green "服务文件创建成功"
+
 
 # 重新加载systemd并启动TeamSpeak服务
-echo "正在启动TeamSpeak服务..."
 sudo systemctl daemon-reload
-sudo systemctl start teamspeak
-sudo systemctl enable teamspeak
+while : ; do
+        readp "服务文件已就绪,现在启动服务器吗?\n1、是，执行(回车默认)\n2、否,跳过!自行处理\n请选择: " START_SERVICE
+        check_input "$START_SERVICE"
+        [[ $? -eq 0 ]] && break
+    done
+    if [[ -z $START_SERVICE ]] || [[ $START_SERVICE == "1" || $START_SERVICE == "yes" ]]; then
+        sudo systemctl start teamspeak
+        sudo systemctl enable teamspeak
+        
+        if systemctl is-active --quiet teamspeak; then
+            green "TeamSpeak服务器已启动!"
+        else
+            red "TeamSpeak服务器启动失败"
+            yellow "使用以下命令查看服务状态: sudo journalctl -xeu teamspeak"
+        fi
+
+    else
+        red "注意: TeamSpeak服务器还未启动,请在合适的时候进行手动启动"
+        yellow "使用以下命令手动启动服务器: sudo systemctl start teamspeak"
+    fi
