@@ -21,6 +21,7 @@ check_input() {
     fi
     return 0
 }
+
 # 安装所需工具
 yellow "正在安装依赖..."
 sudo apt update
@@ -32,20 +33,22 @@ if ! wget -qP "$TEMP_DIR" "$DOWNLOAD_URL"; then
     red "下载 TeamSpeak 服务器文件失败"
     exit 1
 fi
+green "服务器文件下载成功"
+
 # 确保目标安装目录存在
 sudo mkdir -p "$TeamSpeak_DIR"
+
 # 解压文件到目标安装目录
 if ! tar xvjf "$TEMP_DIR/teamspeak3-server_linux_amd64-3.13.7.tar.bz2" -C "$TeamSpeak_DIR"; then
     red "解压 TeamSpeak 服务器文件失败"
     exit 1
 fi
+
 # 删除临时文件
 rm -rf "$TEMP_DIR"
 
 # 设置权限
-blue "正在设置权限..."
-sudo chown -R $(whoami):$(whoami) $TeamSpeak_DIR
-green "权限设置成功"
+sudo chown -R "$(whoami)":"$(whoami)" $TeamSpeak_DIR
 
 # 配置防火墙
 blue "开始配置防火墙..."
@@ -71,7 +74,7 @@ if [[ -z $AUTO_ALLOW ]] || [[ $AUTO_ALLOW == "1" || $AUTO_ALLOW == "yes" ]]; the
             red "放行端口9987 (UDP)失败"
         fi
     else
-        red "注意：请手动放行端口9987 (UDP)"
+        red "注意:请手动放行端口9987 (UDP)"
     fi
 
     while : ; do
@@ -87,7 +90,7 @@ if [[ -z $AUTO_ALLOW ]] || [[ $AUTO_ALLOW == "1" || $AUTO_ALLOW == "yes" ]]; the
             red "放行端口30033 (TCP)失败"
         fi
     else
-        red "注意：请手动放行端口30033 (TCP)"
+        red "注意:请手动放行端口30033 (TCP)"
     fi
 
     while : ; do
@@ -103,7 +106,7 @@ if [[ -z $AUTO_ALLOW ]] || [[ $AUTO_ALLOW == "1" || $AUTO_ALLOW == "yes" ]]; the
             red "放行端口10011 (TCP)失败"
         fi
     else
-        red "注意：请手动放行端口10011 (TCP)"
+        red "注意:请手动放行端口10011 (TCP)"
     fi
 
     while : ; do
@@ -119,14 +122,13 @@ if [[ -z $AUTO_ALLOW ]] || [[ $AUTO_ALLOW == "1" || $AUTO_ALLOW == "yes" ]]; the
             red "放行端口10022 (TCP)失败"
         fi
     else
-        red "注意：请手动放行端口10022 (TCP)"
+        red "注意:请手动放行端口10022 (TCP)"
     fi
 
     green "防火墙配置完成。"
 else
     red "请手动放行所需端口。"
 fi
-# 防火墙部分结束
 
 # 创建服务文件
 blue "正在创建服务"
@@ -148,7 +150,7 @@ Type=forking
 [Install]
 WantedBy=multi-user.target
 EOL
-touch /opt/teamspeak/teamspeak3-server_linux_amd64/.ts3server_license_accepted
+touch "$TeamSpeak_DIR/teamspeak3-server_linux_amd64/.ts3server_license_accepted"
 green "服务文件创建成功"
 
 
