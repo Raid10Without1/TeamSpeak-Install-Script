@@ -55,14 +55,14 @@ blue "开始配置防火墙..."
 sudo ufw enable
 
 while : ; do
-    readp "是否自动放行端口?\n1、是，执行(回车默认)\n2、否,跳过!自行处理\n请选择: " AUTO_ALLOW
+    readp "是否自动放行端口?\n1、是,执行(回车默认)\n2、否,跳过!自行处理\n请选择: " AUTO_ALLOW
     check_input "$AUTO_ALLOW"
     [[ $? -eq 0 ]] && break
 done
 
 if [[ -z $AUTO_ALLOW ]] || [[ $AUTO_ALLOW == "1" || $AUTO_ALLOW == "yes" ]]; then
     while : ; do
-        readp "是否自动放行默认TeamSpeak端口9987 (UDP)?\n1、是，执行(回车默认)\n2、否,跳过!自行处理\n请选择: " OPEN_Voice
+        readp "是否自动放行默认TeamSpeak端口9987 (UDP)?\n1、是,执行(回车默认)\n2、否,跳过!自行处理\n请选择: " OPEN_Voice
         check_input "$OPEN_Voice"
         [[ $? -eq 0 ]] && break
     done
@@ -78,7 +78,7 @@ if [[ -z $AUTO_ALLOW ]] || [[ $AUTO_ALLOW == "1" || $AUTO_ALLOW == "yes" ]]; the
     fi
 
     while : ; do
-        readp "是否自动放行文件传输端口30033 (TCP)?\n1、是，执行(回车默认)\n2、否,跳过!自行处理\n请选择: " OPEN_FILE
+        readp "是否自动放行文件传输端口30033 (TCP)?\n1、是,执行(回车默认)\n2、否,跳过!自行处理\n请选择: " OPEN_FILE
         check_input "$OPEN_FILE"
         [[ $? -eq 0 ]] && break
     done
@@ -94,7 +94,7 @@ if [[ -z $AUTO_ALLOW ]] || [[ $AUTO_ALLOW == "1" || $AUTO_ALLOW == "yes" ]]; the
     fi
 
     while : ; do
-        readp "是否自动放行服务查询端口10011 (TCP)?\n1、是，执行(回车默认)\n2、否,跳过!自行处理\n请选择: " OPEN_SERVICE
+        readp "是否自动放行服务查询端口10011 (TCP)?\n1、是,执行(回车默认)\n2、否,跳过!自行处理\n请选择: " OPEN_SERVICE
         check_input "$OPEN_SERVICE"
         [[ $? -eq 0 ]] && break
     done
@@ -110,7 +110,7 @@ if [[ -z $AUTO_ALLOW ]] || [[ $AUTO_ALLOW == "1" || $AUTO_ALLOW == "yes" ]]; the
     fi
 
     while : ; do
-        readp "是否自动放行服务SSH查询端口10022 (TCP)?\n1、是，执行(回车默认)\n2、否,跳过!自行处理\n请选择: " OPEN_SERVICE_SSH
+        readp "是否自动放行服务SSH查询端口10022 (TCP)?\n1、是,执行(回车默认)\n2、否,跳过!自行处理\n请选择: " OPEN_SERVICE_SSH
         check_input "$OPEN_SERVICE_SSH"
         [[ $? -eq 0 ]] && break
     done
@@ -158,7 +158,7 @@ green "服务文件创建成功"
 sudo systemctl daemon-reload
 
 while : ; do
-    readp "服务文件已就绪,现在启动服务器吗?\n1、是，执行(回车默认)\n2、否,跳过!自行处理\n请选择: " START_SERVICE
+    readp "服务文件已就绪,现在启动服务器吗?\n1、是,执行(回车默认)\n2、否,跳过!自行处理\n请选择: " START_SERVICE
     if [[ -z "$START_SERVICE" || "$START_SERVICE" == "1" || "$START_SERVICE" == "yes" ]]; then
         sudo systemctl enable teamspeak --now
         green "TeamSpeak服务器已启动!"
@@ -167,7 +167,7 @@ while : ; do
         echo
         exit 0
     else
-        red "输入错误，请重新选择"
+        red "输入错误,请重新选择"
     fi
 done
 
