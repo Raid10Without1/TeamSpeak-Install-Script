@@ -5,13 +5,13 @@ TEMP_DIR=$(mktemp -d)  # 指定临时目录路径
 TeamSpeak_DIR="/opt/teamspeak"  # 指定目标安装目录
 DOWNLOAD_URL="https://files.teamspeak-services.com/releases/server/$TS_VERSION/teamspeak3-server_linux_amd64-$TS_VERSION.tar.bz2"
 
-#Colorful Codes
-red(){ echo -e "\033[31m\033[01m$1\033[0m";}
-green(){ echo -e "\033[32m\033[01m$1\033[0m";}
-yellow(){ echo -e "\033[33m\033[01m$1\033[0m";}
-blue(){ echo -e "\033[36m\033[01m$1\033[0m";}
-white(){ echo -e "\033[37m\033[01m$1\033[0m";}
-readp(){ read -p "$(yellow "$1")" $2;}
+# Colorful Codes
+red() { echo -e "\033[31m\033[01m$1\033[0m"; }
+green() { echo -e "\033[32m\033[01m$1\033[0m"; }
+yellow() { echo -e "\033[33m\033[01m$1\033[0m"; }
+blue() { echo -e "\033[36m\033[01m$1\033[0m"; }
+white() { echo -e "\033[37m\033[01m$1\033[0m"; }
+readp() { read -p "$(yellow "$1")" $2; }
 
 # 输入检查
 check_input() {
@@ -28,7 +28,7 @@ sudo apt update
 sudo apt install -y wget bzip2 tar
 
 # 下载并解压TeamSpeak服务器
-blue "正在下载TeamSepak服务器文件..."
+blue "正在下载TeamSpeak服务器文件..."
 if ! wget -qP "$TEMP_DIR" "$DOWNLOAD_URL"; then
     red "下载 TeamSpeak 服务器文件失败"
     exit 1
@@ -39,7 +39,7 @@ green "服务器文件下载成功"
 sudo mkdir -p "$TeamSpeak_DIR"
 
 # 解压文件到目标安装目录
-if ! tar xvjf "$TEMP_DIR/teamspeak3-server_linux_amd64-3.13.7.tar.bz2" -C "$TeamSpeak_DIR"; then
+if ! sudo tar xvjf "$TEMP_DIR/teamspeak3-server_linux_amd64-$TS_VERSION.tar.bz2" -C "$TeamSpeak_DIR" --strip-components=1; then
     red "解压 TeamSpeak 服务器文件失败"
     exit 1
 fi
@@ -52,7 +52,6 @@ sudo chown -R "$(whoami)":"$(whoami)" $TeamSpeak_DIR
 
 # 配置防火墙
 blue "开始配置防火墙..."
-sudo ufw enable
 
 while : ; do
     readp "是否自动放行端口?\n1、是,执行(回车默认)\n2、否,跳过!自行处理\n请选择: " AUTO_ALLOW
@@ -140,36 +139,44 @@ After=network.target
 [Service]
 User=$(whoami)
 Group=$(whoami)
-WorkingDirectory=/opt/teamspeak/teamspeak3-server_linux_amd64
-ExecStart=/opt/teamspeak/teamspeak3-server_linux_amd64/ts3server_minimal_runscript.sh
-ExecStop=/opt/teamspeak/teamspeak3-server_linux_amd64/ts3server_minimal_runscript.sh stop
-PIDFile=/opt/teamspeak/teamspeak3-server_linux_amd64/ts3server.pid
+WorkingDirectory=$TeamSpeak_DIR
+ExecStart=$TeamSpeak_DIR/ts3server_startscript.sh start
+ExecStop=$TeamSpeak_DIR/ts3server_startscript.sh stop
+PIDFile=$TeamSpeak_DIR/ts3server.pid
 Restart=always
 Type=forking
 
 [Install]
 WantedBy=multi-user.target
 EOL
-touch "$TeamSpeak_DIR/teamspeak3-server_linux_amd64/.ts3server_license_accepted"
+
+touch "$TeamSpeak_DIR/.ts3server_license_accepted"
 green "服务文件创建成功"
 
-
 # 重新加载 systemd 并启动 TeamSpeak 服务器
-sudo systemctl daemon-reload
 
 while : ; do
     readp "服务文件已就绪,现在启动服务器吗?\n1、是,执行(回车默认)\n2、否,跳过!自行处理\n请选择: " START_SERVICE
     if [[ -z "$START_SERVICE" || "$START_SERVICE" == "1" || "$START_SERVICE" == "yes" ]]; then
-        sudo systemctl enable teamspeak --now
-        green "TeamSpeak服务器已启动!"
-        break
+        sudo systemctl daemon-reload
+        sudo systemctl enable teamspeak >/dev/null 2>&1
+        sudo systemctl start teamspeak
+        if sudo systemctl is-active --quiet teamspeak; then
+            green "TeamSpeak服务器已启动!"
+        else
+            red "TeamSpeak服务器启动失败,请检查日志。"
+            yellow "使用以下命令查看服务状态: sudo journalctl -xeu teamspeak"
+            echo "apikey=$(systemctl status teamspeak | grep -oP 'apikey=\s*\K\S+')" > ~/token.txt
+            echo "token=$(systemctl status teamspeak | grep -oP 'token=\K\S+')" >> ~/token.txt
+            green "已将TeamSpeak管理所需的APIKEY以及TOKEN写入到文件内:"
+            echo -e "$(green "可使用以下命令进行查看:") $(blue "cat ~/token.txt")"
+        fi
+        exit 0
     elif [[ "$START_SERVICE" == "2" ]]; then
-        echo
+        red "注意: TeamSpeak服务器还未启动,请在合适的时候进行手动启动"
+        yellow "使用以下命令手动启动服务器: sudo systemctl enable teamspeak --now"
         exit 0
     else
         red "输入错误,请重新选择"
     fi
 done
-
-red "注意: TeamSpeak服务器还未启动,请在合适的时候进行手动启动"
-yellow "使用以下命令手动启动服务器: sudo systemctl enable teamspeak --now"
