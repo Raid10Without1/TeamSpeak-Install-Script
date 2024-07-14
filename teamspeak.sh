@@ -15,7 +15,7 @@ readp() { read -p "$(yellow "$1")" $2; }
 
 # 输入检查
 check_input() {
-    if [[ $1 != "1" && $1 != "yes" && $1 != "2" && $1 != "no" && ! -z $1 ]]; then
+    if [[ $1 != "1" && $1 != "yes" && $1 != "y" && $1 != "2" && $1 != "no" && $1 != "n" && ! -z $1 ]]; then
         red "输入错误,请重新选择"
         return 1
     fi
@@ -23,9 +23,37 @@ check_input() {
 }
 
 # 安装所需工具
-yellow "正在安装依赖..."
+yellow "正在安装所需依赖..."
 sudo apt update
 sudo apt install -y wget bzip2 tar
+
+# 继续操作选项
+readp "是否继续操作? \n1、是,继续操作\n2、否,退出脚本\n请选择: " CONTINUE
+
+if [[ -z "$CONTINUE" || "$CONTINUE" == "2" || "$CONTINUE" == "n" || "$CONTINUE" == "no" ]]; then
+    red "操作已取消,脚本退出。"
+    exit 0
+elif [[ "$CONTINUE" != "1" && "$CONTINUE" != "y" && "$CONTINUE" != "yes" ]]; then
+    red "输入错误,脚本退出。"
+    exit 1
+fi
+
+# 检查是否已安装
+if [[ -d "$TeamSpeak_DIR" ]]; then
+    green "TeamSpeak 服务器已安装，要覆盖安装吗？"
+    readp "是否重新安装? \n1、是,重新安装\n2、否,退出脚本\n请选择: " REINSTALL
+
+    if [[ -z "$REINSTALL" || "$REINSTALL" == "2" || "$REINSTALL" == "n" || "$REINSTALL" == "no" ]]; then
+        red "TeamSpeak已经安装,此脚本退出。"
+        exit 0
+    elif [[ "$REINSTALL" == "1" || "$REINSTALL" == "y" || "$REINSTALL" == "yes" ]]; then
+        sudo rm -rf "$TeamSpeak_DIR/teamspeak3-server_linux_amd64"
+        green "已删除旧的安装文件。"
+    else
+        red "输入错误,脚本退出。"
+        exit 1
+    fi
+fi
 
 # 下载并解压TeamSpeak服务器
 blue "正在下载TeamSpeak服务器文件..."
