@@ -40,7 +40,7 @@ fi
 
 # 检查是否已安装
 if [[ -d "$TeamSpeak_DIR/teamspeak3-server_linux_amd64" ]]; then
-    green "TeamSpeak 服务器已安装."
+    green "TeamSpeak 服务器已安装，要覆盖安装吗？"
     readp "是否重新安装? \n1、是,重新安装\n2、否,退出脚本\n请选择: " REINSTALL
 
     if [[ -z "$REINSTALL" || "$REINSTALL" == "2" || "$REINSTALL" == "n" || "$REINSTALL" == "no" ]]; then
